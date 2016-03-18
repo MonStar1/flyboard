@@ -1,0 +1,4 @@
+﻿{
+"d_home": "Main",
+"d_exit": "Выход Exit"
+}
