@@ -5,6 +5,10 @@ using System;
 public class Movesisarp : MonoBehaviour {
 	private GameObject player;
     private Rigidbody playerRB;
+    private Camera mainCamera;
+    private Ray cameraRay;
+
+    private Vector3 hitPoint;
 
 	public int acceleration = 300;
     public int maxSpeed = 70;
@@ -12,37 +16,42 @@ public class Movesisarp : MonoBehaviour {
 	void Start () {
         player = (GameObject)this.gameObject;
         playerRB = player.GetComponent<Rigidbody>();
+        mainCamera = Camera.main;
     }
 
-    void OnDrawGizmosSelected()
+    void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
-        Gizmos.DrawSphere(temp, 2);
+        Gizmos.DrawSphere(hitPoint, 2);
+        Debug.Log(cameraRay.direction * 10);
     }
 
-    Vector3 temp;
-
     void FixedUpdate(){
-        Vector3 camera = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, Camera.main.nearClipPlane));
+        cameraRay  = mainCamera.ScreenPointToRay(Input.mousePosition);
+
+        RaycastHit hit;
+        Physics.Raycast(cameraRay, out hit);
+        if(hit.collider != null)
+        {
+            hitPoint = hit.point;
+        }
+
+        Vector3 relativePos = hitPoint - playerRB.position;
+        Quaternion rotation = Quaternion.LookRotation(relativePos);
+        playerRB.rotation = rotation;
 
 
-        Debug.Log(camera);
-        float line1 = Vector3.Distance(playerRB.position, camera);
-        float line2 = Vector3.Distance(playerRB.position, temp);
-
-        temp = new Vector3(playerRB.position.x, 5, camera.z);
-
-
-        Debug.DrawLine(camera, playerRB.position, Color.red);
-
-        if (Input.GetAxis("Vertical") != 0) 
+        if (Input.GetAxis("Vertical") == 1) 
 		{
             playerRB.AddRelativeForce(Vector3.forward * acceleration * Input.GetAxis("Vertical"));
+        } else if (Input.GetAxis("Vertical") == -1)
+        {
+            playerRB.AddForce(Vector3.forward * acceleration * Input.GetAxis("Vertical"));
         }
 
         if (Input.GetAxis("Horizontal") != 0) 
 		{
-            playerRB.AddRelativeForce(Vector3.right * acceleration * Input.GetAxis("Horizontal"));
+            playerRB.AddForce(Vector3.right * acceleration * Input.GetAxis("Horizontal"));
             //playerRB.AddTorque(Vector3.down * acceleration);
         }
 
@@ -65,8 +74,14 @@ public class Movesisarp : MonoBehaviour {
         {
             stopForce();
         }
-        
+
+        MoveCamera();    
 	}
+
+    private void MoveCamera()
+    {
+        mainCamera.transform.position = new Vector3(player.transform.position.x, mainCamera.transform.position.y, player.transform.position.z);
+    }
 
     private void stopForce()
     {
