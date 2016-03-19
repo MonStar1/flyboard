@@ -14,47 +14,54 @@ public class Movesisarp : MonoBehaviour {
         playerRB = player.GetComponent<Rigidbody>();
     }
 
-	void Update(){
-        Debug.logger.Log("speed: " + playerRB.velocity);
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawSphere(temp, 2);
+    }
 
-        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) 
+    Vector3 temp;
+
+    void FixedUpdate(){
+        Vector3 camera = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, Camera.main.nearClipPlane));
+
+
+        Debug.Log(camera);
+        float line1 = Vector3.Distance(playerRB.position, camera);
+        float line2 = Vector3.Distance(playerRB.position, temp);
+
+        temp = new Vector3(playerRB.position.x, 5, camera.z);
+
+
+        Debug.DrawLine(camera, playerRB.position, Color.red);
+
+        if (Input.GetAxis("Vertical") != 0) 
 		{
-            if(playerRB.velocity.z < maxSpeed) { 
-                playerRB.AddForce(Vector3.forward * acceleration);
-            }
-            //player.transform.position += Vector3.forward * speed * Time.deltaTime; 
+            playerRB.AddRelativeForce(Vector3.forward * acceleration * Input.GetAxis("Vertical"));
         }
 
-		if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) 
+        if (Input.GetAxis("Horizontal") != 0) 
 		{
-            if (playerRB.velocity.z > -maxSpeed) {
-                playerRB.AddForce(Vector3.back * acceleration);
-            }
-            //player.transform.position += Vector3.back * speed * Time.deltaTime; 
+            playerRB.AddRelativeForce(Vector3.right * acceleration * Input.GetAxis("Horizontal"));
+            //playerRB.AddTorque(Vector3.down * acceleration);
         }
 
-        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) 
-		{
-            if (playerRB.velocity.x > -maxSpeed)
-            {
-                playerRB.AddForce(Vector3.left * acceleration);
-            }
-            //player.transform.position += Vector3.left * speed * Time.deltaTime;
+        float velX = playerRB.velocity.x;
+        float velZ = playerRB.velocity.z;
+        Vector3 normal = playerRB.velocity.normalized;
+        if (Math.Abs(velX) > maxSpeed)
+        {
+            playerRB.velocity = new Vector3(normal.x * maxSpeed, 0, velZ);
+            velX = normal.x * maxSpeed;
         }
 
-        if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) 
-		{
-            if (playerRB.velocity.x < maxSpeed)
-            {
-                playerRB.AddForce(Vector3.right * acceleration);
-            }
-            //player.transform.position += Vector3.right * speed * Time.deltaTime;
-        } 
+        if (Math.Abs(velZ) > maxSpeed)
+        {
+            playerRB.velocity = new Vector3(velX, 0, normal.z * maxSpeed);
+            velZ = normal.z * maxSpeed;
+        }
 
-        if(!(Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
-            && !(Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
-            && !(Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
-            && !(Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)))
+        if (Input.GetAxis("Vertical") == 0 && Input.GetAxis("Horizontal") == 0)
         {
             stopForce();
         }
@@ -63,7 +70,7 @@ public class Movesisarp : MonoBehaviour {
 
     private void stopForce()
     {
-        Debug.logger.Log("stop force: " + -playerRB.velocity);
+        //Debug.logger.Log("stop force: " + -playerRB.velocity);
         playerRB.AddForce(-playerRB.velocity);
     }
 }
